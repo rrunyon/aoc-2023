@@ -8,7 +8,6 @@ function solution() {
     if (!line) continue;
 
     line = line.replaceAll(/[a-z]*/gi, '')
-    console.log(line);
     sum += parseInt(line[0] + line[line.length - 1]);
   }
 
