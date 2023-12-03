@@ -54,7 +54,6 @@ function collectSpecialCharacters(input) {
 function checkAdjacentCells(grid, specialCharacters, [i, j]) {
   let dirs = [[0, 1], [1, 0], [-1, 0], [0, -1], [-1, -1], [-1, 1], [1, -1], [1, 1]];
 
-
   for (let dir of dirs) {
     let newI = i + dir[0];
     let newJ = j + dir[1];
