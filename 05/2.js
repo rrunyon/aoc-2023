@@ -47,35 +47,35 @@ function solution() {
     }
   }
 
-  let keys = ['seed', 'soil', 'fertilizer', 'water', 'light', 'temperature', 'humidity', 'location'];
-  let minLocation = Infinity;
+  let keys = ['seed', 'soil', 'fertilizer', 'water', 'light', 'temperature', 'humidity', 'location'].reverse();
 
-  for (let i = 0; i < seedValues.length; i += 2) {
-    let seedValue = seedValues[i];
-    let range = seedValues[i + 1];
-    for (let j = seedValue; j <= seedValue + range; j++) {
-      let value = j;
+  for (let location = 0; location < Infinity; location++) {
+    if (location % 1000000 === 0) console.log('location: ', location);
 
-      for (let k = 1; k < keys.length; k++) {
-        let leftKey = keys[k - 1];
-        let rightKey = keys[k];
-        let ranges = processedMap.get(leftKey).get(rightKey);
+    let value = location;
+    for (let i = 1; i < keys.length; i++) {
+      let leftKey = keys[i - 1];
+      let rightKey = keys[i];
+      let ranges = processedMap.get(rightKey).get(leftKey);
 
-        for (let [source, destination, range] of ranges) {
-          if (value >= source && value <= source + range) {
-            let delta = value - source;
-            value = destination + delta;
-            break;
-          }
+      for (let [source, destination, range] of ranges) {
+        if (value >= destination && value < destination + range) {
+          let delta = value - destination;
+          value = source + delta;
+          break;
         }
       }
+    }
 
-      minLocation = Math.min(minLocation, value);
+    for (let i = 0; i < seedValues.length; i += 2) {
+      let seedValue = seedValues[i];
+      let range = seedValues[i + 1];
+
+      if (value >= seedValue && value < seedValue + range) {
+        return location;
+      }
     }
   }
-
-  return minLocation;
 }
-
 
 console.log(solution());
