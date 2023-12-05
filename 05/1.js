@@ -15,7 +15,7 @@ import * as fs from 'fs';
 // When preprocessing is finished, follow the map values for seed, soil, fertilizer, water, light, temperature, humidity, and location,
 // and return the minimum location seen for the input seeds using the ranges captured.
 function solution() {
-  let input = fs.readFileSync('./05/test-input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./05/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
   let processedMap = new Map;
   let seedValues = [];
@@ -48,7 +48,7 @@ function solution() {
   }
 
   let keys = ['seed', 'soil', 'fertilizer', 'water', 'light', 'temperature', 'humidity', 'location'];
-  let locations = [];
+  let minLocation = Infinity;
 
   for (let value of seedValues) {
     for (let i = 1; i < keys.length; i++) {
@@ -64,10 +64,11 @@ function solution() {
         }
       }
     }
-    locations.push(value);
+
+    minLocation = Math.min(minLocation, value);
   }
 
-  return Math.min(...locations);
+  return minLocation;
 }
 
 
