@@ -15,7 +15,7 @@ import * as fs from 'fs';
 // When preprocessing is finished, follow the map values for seed, soil, fertilizer, water, light, temperature, humidity, and location,
 // and return the minimum location seen for the input seeds using the ranges captured.
 function solution() {
-  let input = fs.readFileSync('./05/test-input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./05/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
   let processedMap = new Map;
   let seedValues = [];
@@ -49,15 +49,17 @@ function solution() {
 
   let keys = ['seed', 'soil', 'fertilizer', 'water', 'light', 'temperature', 'humidity', 'location'].reverse();
 
-  for (let i = 0; i < Infinity; i++) {
-    let value = i;
-    for (let k = 1; k < keys.length; k++) {
-      let leftKey = keys[k - 1];
-      let rightKey = keys[k];
+  for (let location = 0; location < Infinity; location++) {
+    if (location % 1000000 === 0) console.log('location: ', location);
+
+    let value = location;
+    for (let i = 1; i < keys.length; i++) {
+      let leftKey = keys[i - 1];
+      let rightKey = keys[i];
       let ranges = processedMap.get(rightKey).get(leftKey);
 
       for (let [source, destination, range] of ranges) {
-        if (value >= destination && value <= destination + range) {
+        if (value >= destination && value < destination + range) {
           let delta = value - destination;
           value = source + delta;
           break;
@@ -66,15 +68,14 @@ function solution() {
     }
 
     for (let i = 0; i < seedValues.length; i += 2) {
-      console.log('---------------');
-      console.log('running range: ', i);
       let seedValue = seedValues[i];
       let range = seedValues[i + 1];
 
-      if (value >= seedValue && value <= seedValue + range) return value;
+      if (value >= seedValue && value < seedValue + range) {
+        return location;
+      }
     }
   }
 }
-
 
 console.log(solution());
