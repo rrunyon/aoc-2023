@@ -2,9 +2,9 @@ import * as fs from 'fs';
 import { Queue } from '@datastructures-js/queue';
 
 /*
-Breadth first search: While parsing input and constructing the graph, collect all nodes ending with 'A' in a queue. 
-Use this queue as our starting point for DFS. During each level of traversal, track whether all nodes in the current
-level end in Z, and if they do return the depth of the traversal.
+Least common multiple. Traverse through the graph until we collect a map of 6 unique Z nodes with the number of
+steps required to reach them. Then compute the LCM of all the steps for each node, which gives us the number of
+steps at which we will reach all 6 at the same time.
 */
 function solution() {
   let input = fs.readFileSync('./08/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
@@ -19,36 +19,43 @@ function solution() {
     nodes.set(value, { value, left, right });
   }
 
-  let queue = new Queue;
+  let currentNodes = [];
   for (let [value, node] of nodes) {
-    if (value.endsWith('A')) queue.enqueue(node);
+    if (value.endsWith('A')) currentNodes.push(node);
 
     let { left, right } = node;
     node.left = nodes.get(left);
     node.right = nodes.get(right);
   }
 
+  let zNodeMap = new Map;
   let steps = 0;
-  while (queue.size()) {
-    let size = queue.size();
+  while (zNodeMap.size < currentNodes.length) {
+    let nextNodes = [];
     let instruction = instructions[steps % instructions.length];
-    let isAllZ = true;
 
-    console.log('---------------------------');
-    console.log('depth: ', steps);
-    console.log('size: ', size);
+    for (let node of currentNodes) {
+      let nextNode = instruction === 'L' ? node.left : node.right;
+      nextNodes.push(nextNode);
 
-    for (let i = 0; i < size; i++) {
-      let currentNode = queue.dequeue();
-      let nextNode = instruction === 'L' ? currentNode.left : currentNode.right;
-      queue.enqueue(nextNode);
-
-      if (!nextNode.value.endsWith('Z')) isAllZ = false;
+      if (nextNode.value.endsWith('Z')) {
+        zNodeMap.set(nextNode.value, steps + 1);
+      }
     }
 
+    currentNodes = nextNodes;
     steps++;
-    if (isAllZ) return steps;
   }
+
+  return Array.from(zNodeMap.values()).reduce((prev, curr) => {
+    return prev * curr / gcd(prev, curr);
+  }, 1);
 }
+
+function gcd(a, b) { 
+  if (a == 0) return b; 
+
+  return gcd(b % a, a); 
+} 
 
 console.log(solution());
