@@ -1,97 +1,54 @@
 import * as fs from 'fs';
+import { Queue } from '@datastructures-js/queue';
 
-const CARDS = 'AKQT98765432J'.split('').reduce((prev, curr, i) => {
-  prev[curr] = i
-  return prev;
-}, {});
-
-const FIVE_OF_A_KIND = 0;
-const FOUR_OF_A_KIND = 1;
-const FULL_HOUSE = 2;
-const THREE_OF_A_KIND = 3;
-const TWO_PAIR = 4;
-const ONE_PAIR = 5;
-const HIGH_CARD = 6;
-
+/*
+Breadth first search: While parsing input and constructing the graph, collect all nodes ending with 'A' in a queue. 
+Use this queue as our starting point for DFS. During each level of traversal, track whether all nodes in the current
+level end in Z, and if they do return the depth of the traversal.
+*/
 function solution() {
-  let input = fs.readFileSync('./07/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./08/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
-  let hands = input.map(row => parseRow(row));
-  hands.sort(compareHands);
+  let instructions = input[0];
 
-  return hands.reduce((prev, curr, i) => {
-    return prev + (curr.bid * (i + 1));
-  }, 0);
-}
+  let nodes = new Map;
+  for (let row of input.slice(2)) {
+    let [value, children] = row.split(' = ');
+    let [left, right] = children.slice(1, children.length - 1).split(', ');
 
-function compareHands(a, b) {
-  if (a.type === b.type) {
-    for (let i = 0; i < a.hand.length; i++) {
-      let aCard = a.hand[i];
-      let bCard = b.hand[i];
+    nodes.set(value, { value, left, right });
+  }
 
-      if (aCard !== bCard) {
-        return CARDS[aCard] > CARDS[bCard] ? -1 : 1;
-      }
+  let queue = new Queue;
+  for (let [value, node] of nodes) {
+    if (value.endsWith('A')) queue.enqueue(node);
+
+    let { left, right } = node;
+    node.left = nodes.get(left);
+    node.right = nodes.get(right);
+  }
+
+  let steps = 0;
+  while (queue.size()) {
+    let size = queue.size();
+    let instruction = instructions[steps % instructions.length];
+    let isAllZ = true;
+
+    console.log('---------------------------');
+    console.log('depth: ', steps);
+    console.log('size: ', size);
+
+    for (let i = 0; i < size; i++) {
+      let currentNode = queue.dequeue();
+      let nextNode = instruction === 'L' ? currentNode.left : currentNode.right;
+      queue.enqueue(nextNode);
+
+      if (!nextNode.value.endsWith('Z')) isAllZ = false;
     }
-  } else {
-    return a.type > b.type ? -1 : 1;
+
+    steps++;
+    if (isAllZ) return steps;
   }
-}
-
-function parseRow(row) {
-  let [hand, bid] = row.split(' ');
-
-  let cardFrequencyMap = new Map;
-  for (let char of hand) {
-    cardFrequencyMap.set(char, (cardFrequencyMap.get(char) || 0) + 1);
-  }
-
-  let jokerCount = cardFrequencyMap.get('J');
-  // Don't count jacks for the original hand type or they'll be double counted as wildcards.
-  // Example: 'J2J3J' will register as three of a kind below, and then get upgraded to 5 of a kind.
-  // It should be detected as high card and then upgraded to four of a kind.
-  cardFrequencyMap.delete('J');
-
-  let cardCountMap = new Map;
-  for (let [_key, value] of cardFrequencyMap) {
-    cardCountMap.set(value, (cardCountMap.get(value) || 0) + 1);
-  }
-
-  let type;
-  if (cardCountMap.has(5)) {
-    type = FIVE_OF_A_KIND;
-  } else if (cardCountMap.has(4)) {
-    type = FOUR_OF_A_KIND;
-  } else if (cardCountMap.has(3) && cardCountMap.has(2)) {
-    type = FULL_HOUSE;
-  } else if (cardCountMap.has(3)) {
-    type = THREE_OF_A_KIND;
-  } else if (cardCountMap.get(2) === 2) {
-    type = TWO_PAIR;
-  } else if (cardCountMap.get(2) === 1)  {
-    type = ONE_PAIR;
-  } else {
-    type = HIGH_CARD;
-  }
-
-  for (let i = 0; i < jokerCount; i++) {
-    if (type === HIGH_CARD) {
-      type = ONE_PAIR;
-    } else if (type === ONE_PAIR) {
-      type = THREE_OF_A_KIND;
-    } else if (type === TWO_PAIR) {
-      type = FULL_HOUSE;
-    } else if (type === THREE_OF_A_KIND || type === FULL_HOUSE) {
-      type = FOUR_OF_A_KIND;
-    } else if (type === FOUR_OF_A_KIND) {
-      type = FIVE_OF_A_KIND;
-    }
-  }
-
-  bid = parseInt(bid);
-
-  return { type, hand, bid }
 }
 
 console.log(solution());
