@@ -14,7 +14,7 @@ const ONE_PAIR = 5;
 const HIGH_CARD = 6;
 
 function solution() {
-  let input = fs.readFileSync('./07/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./07/test-input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
   let hands = input.map(row => parseRow(row));
   hands.sort(compareHands);
