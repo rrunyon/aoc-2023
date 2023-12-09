@@ -1,8 +1,8 @@
 {
-  "type": "module",
   "dependencies": {
     "@datastructures-js/priority-queue": "^6.1.4",
     "@datastructures-js/queue": "^4.2.3",
-    "fs": "^0.0.1-security"
+    "fs": "^0.0.1-security",
+    "typescript": "^5.3.3"
   }
 }
