@@ -1,61 +1,41 @@
 import * as fs from 'fs';
-import { Queue } from '@datastructures-js/queue';
 
-/*
-Least common multiple. Traverse through the graph until we collect a map of 6 unique Z nodes with the number of
-steps required to reach them. Then compute the LCM of all the steps for each node, which gives us the number of
-steps at which we will reach all 6 at the same time.
-*/
 function solution() {
-  let input = fs.readFileSync('./08/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./09/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
-  let instructions = input[0];
+  let sum = 0;
 
-  let nodes = new Map;
-  for (let row of input.slice(2)) {
-    let [value, children] = row.split(' = ');
-    let [left, right] = children.slice(1, children.length - 1).split(', ');
+  for (let row of input) {
+    let history = row.split(' ').map(number => parseInt(number));
 
-    nodes.set(value, { value, left, right });
-  }
+    let levels = [history];
+    let currentLevel = history;
 
-  let currentNodes = [];
-  for (let [value, node] of nodes) {
-    if (value.endsWith('A')) currentNodes.push(node);
+    while (levels[levels.length - 1].some(el => el !== 0)) {
+      let nextLevel = [];
 
-    let { left, right } = node;
-    node.left = nodes.get(left);
-    node.right = nodes.get(right);
-  }
+      for (let i = 1; i < currentLevel.length; i++) {
+        let prev = currentLevel[i - 1];
+        let next = currentLevel[i];
 
-  let zNodeMap = new Map;
-  let steps = 0;
-  while (zNodeMap.size < currentNodes.length) {
-    let nextNodes = [];
-    let instruction = instructions[steps % instructions.length];
-
-    for (let node of currentNodes) {
-      let nextNode = instruction === 'L' ? node.left : node.right;
-      nextNodes.push(nextNode);
-
-      if (nextNode.value.endsWith('Z')) {
-        zNodeMap.set(nextNode.value, steps + 1);
+        nextLevel.push(next - prev);
       }
+
+      levels.push(nextLevel);
+      currentLevel = nextLevel;
     }
 
-    currentNodes = nextNodes;
-    steps++;
+    for (let i = levels.length - 3; i >= 0; i--) {
+      let previousLevel = levels[i + 1];
+      let level = levels[i];
+
+      level.unshift(level[0] - previousLevel[0]);
+    }
+
+    sum += levels[0][0];
   }
 
-  return Array.from(zNodeMap.values()).reduce((prev, curr) => {
-    return prev * curr / gcd(prev, curr);
-  }, 1);
+  return sum;
 }
-
-function gcd(a, b) { 
-  if (a == 0) return b; 
-
-  return gcd(b % a, a); 
-} 
 
 console.log(solution());

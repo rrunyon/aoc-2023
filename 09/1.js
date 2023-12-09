@@ -25,7 +25,6 @@ function solution() {
       currentLevel = nextLevel;
     }
 
-    let value;
     for (let i = levels.length - 3; i >= 0; i--) {
       let previousLevel = levels[i + 1];
       let level = levels[i];
