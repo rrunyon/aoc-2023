@@ -4,8 +4,29 @@ function solution() {
   let input = fs.readFileSync('./10/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
   let grid = input.map(row => row.split(''));
 
-  let startPosition = getStartPosition(grid);
-  return getLongestPath(grid, startPosition) / 2;
+  let currentPosition = getStartPosition(grid);
+  let visited = new Set;
+  let depth = 0;
+  while (!visited.has(currentPosition.join(','))) { 
+    let key = currentPosition.join(',');
+    visited.add(key);
+
+    let [i, j] = currentPosition;
+
+    for (let [key, value] of Object.entries(DIRS)) {
+      let newI = i + value[0];
+      let newJ = j + value[1];
+      
+      if (shouldVisit(grid, key, currentPosition, [newI, newJ], visited)) {
+        currentPosition = [newI, newJ];
+        break;
+      }
+    }
+
+    depth++;
+  }
+
+  return depth / 2;
 }
 
 function getStartPosition(grid) {
@@ -40,30 +61,6 @@ const DIRS = {
   down: [1, 0],
   up: [-1, 0],
 };
-
-function getLongestPath(grid, position, depth = 1, visited = new Set) {
-  let key = position.join(',');
-  visited.add(key);
-
-  // console.log('----------------');
-  // console.log('depth: ', depth)
-  // console.log('visited: ', visited)
-
-  let [i, j] = position;
-  let max = depth;
-  for (let [key, value] of Object.entries(DIRS)) {
-    let newI = i + value[0];
-    let newJ = j + value[1];
-    
-    if (shouldVisit(grid, key, position, [newI, newJ], visited)) {
-      max = Math.max(max, getLongestPath(grid, [newI, newJ], depth + 1, visited));
-    }
-  }
-
-  visited.delete(key);
-
-  return max;
-}
 
 function shouldVisit(grid, direction, currentPosition, newPosition, visited) {
   let [i, j] = currentPosition;
