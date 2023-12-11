@@ -8,7 +8,7 @@ const DIRS = {
 };
 
 function solution() {
-  let input = fs.readFileSync('./10/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./10/test-input3.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
   let grid = input.map(row => row.split(''));
 
   let loopCells = detectLoop(grid);
@@ -30,7 +30,7 @@ function isInside(i, j, grid, loopCells) {
   let isInside = false;
   let row = grid[i];
 
-  let verticalPipes = new Set('|LJ7FS'.split(''));
+  let verticalPipes = new Set('|7FS'.split(''));
 
   for (let k = j; k < row.length; k++) {
     let cell = grid[i][k];
