@@ -8,7 +8,7 @@ const DIRS = {
 };
 
 function solution() {
-  let input = fs.readFileSync('./10/test-input3.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./10/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
   let grid = input.map(row => row.split(''));
 
   let loopCells = detectLoop(grid);
@@ -16,10 +16,9 @@ function solution() {
   let insideCount = 0;
   for (let i = 0; i < grid.length; i++) {
     for (let j = 0; j < grid[0].length; j++) {
-      let cell = grid[i][j];
-      if (cell === '.') {
-        if (isInside(i, j, grid, loopCells)) insideCount++;
-      }
+      if (loopCells.has([i, j].join(','))) continue;
+
+      if (isInside(i, j, grid, loopCells)) insideCount++;
     }
   }
 
@@ -30,7 +29,7 @@ function isInside(i, j, grid, loopCells) {
   let isInside = false;
   let row = grid[i];
 
-  let verticalPipes = new Set('|7FS'.split(''));
+  let verticalPipes = new Set('|LJ'.split(''));
 
   for (let k = j; k < row.length; k++) {
     let cell = grid[i][k];
@@ -45,7 +44,8 @@ function isInside(i, j, grid, loopCells) {
 }
  
 function detectLoop(grid) {
-  let currentPosition = getStartPosition(grid);
+  let startPosition = getStartPosition(grid);
+  let currentPosition = startPosition;
   let visited = new Set;
 
   while (!visited.has(currentPosition.join(','))) { 
@@ -65,7 +65,30 @@ function detectLoop(grid) {
     }
   }
 
+  replaceStartChar(startPosition, grid, visited);
   return visited;
+}
+
+function replaceStartChar(startPosition, grid, visited) {
+  let [i, j] = startPosition;
+  let left = visited.has([i, j - 1].join(','));
+  let right = visited.has([i, j + 1].join(','));
+  let down = visited.has([i + 1, j].join(','));
+  let up = visited.has([i - 1, j].join(','));
+
+  if (left && right) {
+    grid[i][j] = '-';
+  } else if (down && up) {
+    grid[i][j] = '|';
+  } else if (down && right) {
+    grid[i][j] = 'F';
+  } else if (down && left) {
+    grid[i][j] = '7';
+  } else if (up && right) {
+    grid[i][j] = 'L';
+  } else if (up && left) {
+    grid[i][j] = 'J';
+  }
 }
 
 function getStartPosition(grid) {
