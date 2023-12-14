@@ -1,97 +1,98 @@
 import * as fs from 'fs';
 
 function solution() {
-  let input = fs.readFileSync('./12/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./13/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+
+  let patterns = [];
+  let pattern = [];
+  for (let row of input) {
+    if (row.length === 0) {
+      patterns.push(pattern);
+      pattern = [];
+    } else {
+      pattern.push(row);
+    }
+  }
+  patterns.push(pattern);
 
   let sum = 0;
-  for (let row of input) {
-    console.log('---------------');
-    console.log(row);
+  for (let pattern of patterns) {
+    let vertical = getVerticalLine(pattern);
+    let horizontal = getHorizontalLine(pattern);
 
-    let [gears, counts] = row.split(' ');
-    gears = gears.split('');
-    counts = counts.split(',').map(count => parseInt(count));
-
-    let expandedGears = [];
-    let expandedCounts = [];
-
-    for (let i = 0; i < 5; i++) {
-      expandedGears = [...expandedGears, ...gears];
-      expandedCounts = [...expandedCounts, ...counts];
-    }
-    sum += getPossibleConfigurations(expandedGears, expandedCounts);
+    sum += vertical + (100 * horizontal);
   }
 
   return sum;
 }
 
-function getPossibleConfigurations(gears, counts, gearI = 0) {
-  if (gearI === gears.length) {
-    return isValidConfiguration(gears, counts) ? 1 : 0;
-  }
+function getHorizontalLine(pattern) {
+  for (let i = 0; i < pattern.length - 1; i++) {
+    let top = i;
+    let bottom = i + 1;
+    let mismatchCount = 0;
 
-  let char = gears[gearI];
+    while (top >= 0 && top < pattern.length && bottom >= 0 && bottom < pattern.length) {
+      let topRow = pattern[top];
+      let bottomRow = pattern[bottom];
 
-  if (char === '.' && !isValidSegment(gears.slice(0, gearI + 1), counts)) {
-    return 0;
-  } else if (char === '?') {
-    gears[gearI] = '.';
-    let left = getPossibleConfigurations(gears, counts, gearI + 1)
-    gears[gearI] = '#';
-    let right = getPossibleConfigurations(gears, counts, gearI + 1)
-    gears[gearI] = '?';
+      for (let j = 0; j < topRow.length; j++) {
+        let topCell = topRow[j];
+        let bottomCell = bottomRow[j];
 
-    return left + right;
-  } else {
-    return getPossibleConfigurations(gears, counts, gearI + 1);
-  }
-}
-
-function isValidSegment(gears, counts) {
-  let countI = 0;
-
-  let currentGearLength = 0;
-  for (let i = 0; i < gears.length; i++) {
-    let char = gears[i];
-    if (char === '.') {
-      if (currentGearLength > 0 && currentGearLength !== counts[countI]) {
-        return false;
-      } else if (currentGearLength > 0 && currentGearLength === counts[countI]) {
-        countI++;
+        if (topCell !== bottomCell) mismatchCount++;
       }
 
-      currentGearLength = 0;
-    } else {
-      currentGearLength++;
+      if (mismatchCount > 1) {
+        break;
+      } else {
+        top--;
+        bottom++;
+      }
     }
+
+    if (mismatchCount === 1) return i + 1;
   }
 
-  return true;
+  return 0;
 }
 
-function isValidConfiguration(gears, counts) {
-  let countI = 0;
+function getVerticalLine(pattern) {
+  for (let i = 0; i < pattern[0].length - 1; i++) {
+    let left = i;
+    let right = i + 1;
+    let mismatchCount = 0;
 
-  let currentGearLength = 0;
-  for (let i = 0; i < gears.length; i++) {
-    let char = gears[i];
-    if (char === '.') {
-      if (currentGearLength > 0 && currentGearLength !== counts[countI]) {
-        return false;
-      } else if (currentGearLength > 0 && currentGearLength === counts[countI]) {
-        countI++;
+    while (left >= 0 && left < pattern[0].length && right >= 0 && right < pattern[0].length) {
+      let leftColumn = [];
+      for (let j = 0; j < pattern.length; j++) {
+        leftColumn.push(pattern[j][left]);
       }
 
-      currentGearLength = 0;
-    } else {
-      currentGearLength++;
+      let rightColumn = [];
+      for (let j = 0; j < pattern.length; j++) {
+        rightColumn.push(pattern[j][right]);
+      }
+
+      for (let j = 0; j < leftColumn.length; j++) {
+        let leftCell = leftColumn[j];
+        let rightCell = rightColumn[j];
+
+        if (leftCell !== rightCell) mismatchCount++;
+      }
+
+      if (mismatchCount > 1) {
+        break;
+      } else {
+        left--;
+        right++;
+      }
     }
+
+    if (mismatchCount === 1) return i + 1;
   }
 
-  if (countI === counts.length && currentGearLength === 0) return true;
-  if (countI === counts.length - 1 && currentGearLength === counts[countI]) return true;
-
-  return false;
+  return 0;
 }
 
 console.log(solution());
