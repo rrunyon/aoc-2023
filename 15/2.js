@@ -1,142 +1,97 @@
 import * as fs from 'fs';
 
 function solution() {
-  let input = fs.readFileSync('./14/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./15/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
-  let grid = parseGrid(input);
+  let steps = input[0].split(',');
+  let boxes = new Array(256);
 
-  let cycles = 1000
-  for (let i = 0; i < cycles; i++) {
-    tiltNorth(grid);
-    tiltWest(grid);
-    tiltSouth(grid);
-    tiltEast(grid);
+  for (let i = 0; i < boxes.length; i++) {
+    boxes[i] = new Box;
   }
 
-  return countTotalLoad(grid);
-}
+  for (let step of steps) {
+    let [label, operation, focalLength] = parse(step);
+    let hash = getHash(label);
+    let box = boxes[hash];
 
-function parseGrid(input) {
-  let grid = [];
-  for (let row of input) {
-    grid.push(row.split(''));
-  }
-
-  return grid;
-}
-
-function tiltNorth(grid) {
-  for (let i = 1; i < grid.length; i++) {
-    for (let j = 0; j < grid[0].length; j++) {
-      if (i === 0) continue;
-
-      let cell = grid[i][j];
-
-      if (cell === 'O') {
-        let k = i;
-        let aboveCell = grid[k-1][j];
-        while (aboveCell === '.') {
-          grid[k-1][j] = 'O';
-          grid[k][j] = '.';
-
-          k--;
-
-          if (k === 0) break;
-          aboveCell = grid[k-1][j];
-        }
-      }
+    if (operation === '=') {
+      box.addLens(label, parseInt(focalLength));
+    } else if (operation === '-') {
+      box.removeLens(label);
     }
   }
-}
 
-function tiltWest(grid) {
-  for (let j = 1; j < grid[0].length; j++) {
-    for (let i = 0; i < grid.length; i++) {
-      if (j === 0) continue;
+  let focusingPower = 0;
+  for (let i = 0; i < boxes.length; i++) {
+    let box = boxes[i];
+    let baseFocusingPower = i + 1;
 
-      let cell = grid[i][j];
-
-      if (cell === 'O') {
-        let k = j;
-        let aboveCell = grid[i][k-1];
-        while (aboveCell === '.') {
-          grid[i][k-1] = 'O';
-          grid[i][k] = '.';
-
-          k--;
-
-          if (k === 0) break;
-          aboveCell = grid[i][k-1];
-        }
-      }
-    }
-  }
-}
-
-function tiltSouth(grid) {
-  for (let i = grid.length - 1; i >= 0; i--) {
-    for (let j = 0; j < grid[0].length; j++) {
-      if (i === grid.length - 1) continue;
-
-      let cell = grid[i][j];
-
-      if (cell === 'O') {
-        let k = i;
-        let aboveCell = grid[k+1][j];
-        while (aboveCell === '.') {
-          grid[k+1][j] = 'O';
-          grid[k][j] = '.';
-
-          k++;
-
-          if (k === grid.length - 1) break;
-          aboveCell = grid[k+1][j];
-        }
-      }
-    }
-  }
-}
-
-function tiltEast(grid) {
-  for (let j = grid[0].length - 2; j >= 0; j--) {
-    for (let i = 0; i < grid.length; i++) {
-      if (j === grid[0].length - 1) continue;
-
-      let cell = grid[i][j];
-
-      if (cell === 'O') {
-        let k = j;
-        let aboveCell = grid[i][k+1];
-        while (aboveCell === '.') {
-          grid[i][k+1] = 'O';
-          grid[i][k] = '.';
-
-          k++;
-
-          if (k === 0) {
-            break;
-          }
-          aboveCell = grid[i][k+1];
-        }
-      }
-    }
-  }
-}
-
-function countTotalLoad(grid) {
-  let sum = 0; 
-
-  for (let i = 0; i < grid.length; i++) {
-    for (let j = 0; j < grid[0].length; j++) {
-      let cell = grid[i][j];
-
-      if (cell === 'O') {
-        sum += grid.length - i;
+    let slotNumber = 1;
+    for (let lens of box.lenses) {
+      if (lens) {
+        focusingPower += baseFocusingPower * slotNumber++ * lens.focalLength;
       }
     }
   }
 
-  return sum;
+  return focusingPower;
+}
+
+function getHash(string) {
+  let currentValue = 0;
+
+  for (let char of string) {
+    let asciiCode = char.charCodeAt();
+
+    currentValue += asciiCode;
+    currentValue *= 17;
+    currentValue %= 256;
+  }
+
+  return currentValue;
+}
+
+function parse(step) {
+  let label;
+  let operation;
+  let focalLength;
+
+  if (step.includes('=')) {
+    [label, focalLength] = step.split('=');
+    operation = '=';
+  } else if (step.includes('-')) {
+    [label] = step.split('-');
+    operation = '-';
+  }
+
+  return [label, operation, focalLength];
+}
+
+class Box {
+  constructor() {
+    this.lenses = [];
+    this.lensMap = new Map;
+  }
+
+  addLens(label, focalLength) {
+    if (this.lensMap.has(label)) {
+      let index = this.lensMap.get(label);
+      let currentLens = this.lenses[index];
+      this.lenses[index] = { ...currentLens, focalLength };
+    } else {
+      this.lenses.push({ label, focalLength });
+      this.lensMap.set(label, this.lenses.length - 1);
+    }
+  }
+
+  removeLens(label) {
+    if (this.lensMap.has(label)) {
+      let index = this.lensMap.get(label);
+      this.lenses[index] = undefined;
+      this.lensMap.delete(label);
+    }
+  }
 }
 
 console.log(solution());
