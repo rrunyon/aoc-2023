@@ -1,91 +1,97 @@
 import * as fs from 'fs';
 
 function solution() {
-  let input = fs.readFileSync('./11/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
-
-  let universe = input.map(row => row.split(''));
-  let expansions = getExpansions(universe);
-  let galaxyPositions = getGalaxyPositions(universe);
+  let input = fs.readFileSync('./12/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
   let sum = 0;
-  for (let i = 0; i < galaxyPositions.length; i++) {
-    for (let j = i + 1; j < galaxyPositions.length; j++) {
-      let galaxy1 = galaxyPositions[i];
-      let galaxy2 = galaxyPositions[j];
-      let xDiff = Math.abs(galaxy1[0] - galaxy2[0]);
-      let yDiff = Math.abs(galaxy1[1] - galaxy2[1]);
+  for (let row of input) {
+    console.log('---------------');
+    console.log(row);
 
-      let minI = Math.min(galaxy1[0], galaxy2[0]);
-      let maxI = Math.max(galaxy1[0], galaxy2[0]);
-      for (let i = minI; i < maxI; i++) {
-        if (expansions.get('horizontal').has(i)) sum += (1000000 - 1)
-      }
+    let [gears, counts] = row.split(' ');
+    gears = gears.split('');
+    counts = counts.split(',').map(count => parseInt(count));
 
-      let minJ = Math.min(galaxy1[1], galaxy2[1]);
-      let maxJ = Math.max(galaxy1[1], galaxy2[1]);
-      for (let i = minJ; i < maxJ; i++) {
-        if (expansions.get('vertical').has(i)) sum += (1000000 - 1)
-      }
+    let expandedGears = [];
+    let expandedCounts = [];
 
-      sum += xDiff + yDiff;
+    for (let i = 0; i < 5; i++) {
+      expandedGears = [...expandedGears, ...gears];
+      expandedCounts = [...expandedCounts, ...counts];
     }
+    sum += getPossibleConfigurations(expandedGears, expandedCounts);
   }
 
   return sum;
 }
 
-function getGalaxyPositions(universe) {
-  let positions = [];
-
-  for (let i = 0; i < universe.length; i++) {
-    for (let j = 0; j < universe[0].length; j++) {
-      if (universe[i][j] === '#') positions.push([i, j]);
-    }
+function getPossibleConfigurations(gears, counts, gearI = 0) {
+  if (gearI === gears.length) {
+    return isValidConfiguration(gears, counts) ? 1 : 0;
   }
 
-  return positions;
+  let char = gears[gearI];
+
+  if (char === '.' && !isValidSegment(gears.slice(0, gearI + 1), counts)) {
+    return 0;
+  } else if (char === '?') {
+    gears[gearI] = '#';
+    let left = getPossibleConfigurations(gears, counts, gearI + 1)
+    gears[gearI] = '.';
+    let right = getPossibleConfigurations(gears, counts, gearI + 1)
+    gears[gearI] = '?';
+
+    return left + right;
+  } else {
+    return getPossibleConfigurations(gears, counts, gearI + 1);
+  }
 }
 
-function getExpansions(universe) {
-  let map = new Map;
-  map.set('vertical', new Set);
-  map.set('horizontal', new Set);
+function isValidSegment(gears, counts) {
+  let countI = 0;
 
-  // Vertically
-  for (let i = 0; i < universe[0].length; i++) {
-    let empty = true;
-
-    for (let j = 0; j < universe.length; j++) {
-      let cell = universe[j][i];
-      if (cell === '#') {
-        empty = false;
-        break;
+  let currentGearLength = 0;
+  for (let i = 0; i < gears.length; i++) {
+    let char = gears[i];
+    if (char === '.') {
+      if (currentGearLength > 0 && currentGearLength !== counts[countI]) {
+        return false;
+      } else if (currentGearLength > 0 && currentGearLength === counts[countI]) {
+        countI++;
       }
-    }
 
-    if (empty) {
-      map.get('vertical').add(i);
+      currentGearLength = 0;
+    } else {
+      currentGearLength++;
     }
   }
 
-  // Horizontally
-  for (let i = 0; i < universe.length; i++) {
-    let empty = true;
+  return true;
+}
 
-    for (let j = 0; j < universe[0].length; j++) {
-      let cell = universe[i][j];
-      if (cell === '#') {
-        empty = false;
-        break;
+function isValidConfiguration(gears, counts) {
+  let countI = 0;
+
+  let currentGearLength = 0;
+  for (let i = 0; i < gears.length; i++) {
+    let char = gears[i];
+    if (char === '.') {
+      if (currentGearLength > 0 && currentGearLength !== counts[countI]) {
+        return false;
+      } else if (currentGearLength > 0 && currentGearLength === counts[countI]) {
+        countI++;
       }
-    }
 
-    if (empty) {
-      map.get('horizontal').add(i);
+      currentGearLength = 0;
+    } else {
+      currentGearLength++;
     }
   }
 
-  return map;
+  if (countI === counts.length && currentGearLength === 0) return true;
+  if (countI === counts.length - 1 && currentGearLength === counts[countI]) return true;
+
+  return false;
 }
 
 console.log(solution());

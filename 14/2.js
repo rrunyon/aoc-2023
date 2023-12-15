@@ -1,14 +1,12 @@
 import * as fs from 'fs';
 
 function solution() {
-  let input = fs.readFileSync('./14/test-input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./14/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
   let grid = parseGrid(input);
 
-  let cycles = 1000000000
+  let cycles = 1000
   for (let i = 0; i < cycles; i++) {
-    if (i % 1000000 === 0) console.log(i / cycles * 100);
-
     tiltNorth(grid);
     tiltWest(grid);
     tiltSouth(grid);
