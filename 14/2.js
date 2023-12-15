@@ -1,98 +1,144 @@
 import * as fs from 'fs';
 
 function solution() {
-  let input = fs.readFileSync('./13/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./14/test-input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
-  let patterns = [];
-  let pattern = [];
+  let grid = parseGrid(input);
+
+  let cycles = 1000000000
+  for (let i = 0; i < cycles; i++) {
+    if (i % 1000000 === 0) console.log(i / cycles * 100);
+
+    tiltNorth(grid);
+    tiltWest(grid);
+    tiltSouth(grid);
+    tiltEast(grid);
+  }
+
+  return countTotalLoad(grid);
+}
+
+function parseGrid(input) {
+  let grid = [];
   for (let row of input) {
-    if (row.length === 0) {
-      patterns.push(pattern);
-      pattern = [];
-    } else {
-      pattern.push(row);
+    grid.push(row.split(''));
+  }
+
+  return grid;
+}
+
+function tiltNorth(grid) {
+  for (let i = 1; i < grid.length; i++) {
+    for (let j = 0; j < grid[0].length; j++) {
+      if (i === 0) continue;
+
+      let cell = grid[i][j];
+
+      if (cell === 'O') {
+        let k = i;
+        let aboveCell = grid[k-1][j];
+        while (aboveCell === '.') {
+          grid[k-1][j] = 'O';
+          grid[k][j] = '.';
+
+          k--;
+
+          if (k === 0) break;
+          aboveCell = grid[k-1][j];
+        }
+      }
     }
   }
-  patterns.push(pattern);
+}
 
-  let sum = 0;
-  for (let pattern of patterns) {
-    let vertical = getVerticalLine(pattern);
-    let horizontal = getHorizontalLine(pattern);
+function tiltWest(grid) {
+  for (let j = 1; j < grid[0].length; j++) {
+    for (let i = 0; i < grid.length; i++) {
+      if (j === 0) continue;
 
-    sum += vertical + (100 * horizontal);
+      let cell = grid[i][j];
+
+      if (cell === 'O') {
+        let k = j;
+        let aboveCell = grid[i][k-1];
+        while (aboveCell === '.') {
+          grid[i][k-1] = 'O';
+          grid[i][k] = '.';
+
+          k--;
+
+          if (k === 0) break;
+          aboveCell = grid[i][k-1];
+        }
+      }
+    }
+  }
+}
+
+function tiltSouth(grid) {
+  for (let i = grid.length - 1; i >= 0; i--) {
+    for (let j = 0; j < grid[0].length; j++) {
+      if (i === grid.length - 1) continue;
+
+      let cell = grid[i][j];
+
+      if (cell === 'O') {
+        let k = i;
+        let aboveCell = grid[k+1][j];
+        while (aboveCell === '.') {
+          grid[k+1][j] = 'O';
+          grid[k][j] = '.';
+
+          k++;
+
+          if (k === grid.length - 1) break;
+          aboveCell = grid[k+1][j];
+        }
+      }
+    }
+  }
+}
+
+function tiltEast(grid) {
+  for (let j = grid[0].length - 2; j >= 0; j--) {
+    for (let i = 0; i < grid.length; i++) {
+      if (j === grid[0].length - 1) continue;
+
+      let cell = grid[i][j];
+
+      if (cell === 'O') {
+        let k = j;
+        let aboveCell = grid[i][k+1];
+        while (aboveCell === '.') {
+          grid[i][k+1] = 'O';
+          grid[i][k] = '.';
+
+          k++;
+
+          if (k === 0) {
+            break;
+          }
+          aboveCell = grid[i][k+1];
+        }
+      }
+    }
+  }
+}
+
+function countTotalLoad(grid) {
+  let sum = 0; 
+
+  for (let i = 0; i < grid.length; i++) {
+    for (let j = 0; j < grid[0].length; j++) {
+      let cell = grid[i][j];
+
+      if (cell === 'O') {
+        sum += grid.length - i;
+      }
+    }
   }
 
   return sum;
-}
-
-function getHorizontalLine(pattern) {
-  for (let i = 0; i < pattern.length - 1; i++) {
-    let top = i;
-    let bottom = i + 1;
-    let mismatchCount = 0;
-
-    while (top >= 0 && top < pattern.length && bottom >= 0 && bottom < pattern.length) {
-      let topRow = pattern[top];
-      let bottomRow = pattern[bottom];
-
-      for (let j = 0; j < topRow.length; j++) {
-        let topCell = topRow[j];
-        let bottomCell = bottomRow[j];
-
-        if (topCell !== bottomCell) mismatchCount++;
-      }
-
-      if (mismatchCount > 1) {
-        break;
-      } else {
-        top--;
-        bottom++;
-      }
-    }
-
-    if (mismatchCount === 1) return i + 1;
-  }
-
-  return 0;
-}
-
-function getVerticalLine(pattern) {
-  for (let i = 0; i < pattern[0].length - 1; i++) {
-    let left = i;
-    let right = i + 1;
-    let mismatchCount = 0;
-
-    while (left >= 0 && left < pattern[0].length && right >= 0 && right < pattern[0].length) {
-      let leftColumn = [];
-      for (let j = 0; j < pattern.length; j++) {
-        leftColumn.push(pattern[j][left]);
-      }
-
-      let rightColumn = [];
-      for (let j = 0; j < pattern.length; j++) {
-        rightColumn.push(pattern[j][right]);
-      }
-
-      for (let j = 0; j < leftColumn.length; j++) {
-        let leftCell = leftColumn[j];
-        let rightCell = rightColumn[j];
-
-        if (leftCell !== rightCell) mismatchCount++;
-      }
-
-      if (mismatchCount > 1) {
-        break;
-      } else {
-        left--;
-        right++;
-      }
-    }
-
-    if (mismatchCount === 1) return i + 1;
-  }
-
-  return 0;
 }
 
 console.log(solution());
