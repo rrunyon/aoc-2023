@@ -12,14 +12,16 @@ function solution() {
     gears = gears.split('');
     counts = counts.split(',').map(count => parseInt(count));
 
-    let expandedGears = [];
-    let expandedCounts = [];
+    let expandedGears = gears;
+    let expandedCounts = counts;
 
-    for (let i = 0; i < 5; i++) {
-      expandedGears = [...expandedGears, ...gears];
+    for (let i = 0; i < 4; i++) {
+      expandedGears = [...expandedGears, '?', ...gears];
       expandedCounts = [...expandedCounts, ...counts];
     }
-    sum += getPossibleConfigurations(expandedGears, expandedCounts);
+    let configurations = getPossibleConfigurations(expandedGears, expandedCounts);
+    console.log(configurations);
+    sum += configurations;
   }
 
   return sum;
@@ -32,9 +34,11 @@ function getPossibleConfigurations(gears, counts, gearI = 0) {
 
   let char = gears[gearI];
 
-  if (char === '.' && !isValidSegment(gears.slice(0, gearI + 1), counts)) {
+  if (char !== '?' && !isValidSegment(gears.slice(0, gearI + 1), counts)) {
     return 0;
-  } else if (char === '?') {
+  }
+
+  if (char === '?') {
     gears[gearI] = '#';
     let left = getPossibleConfigurations(gears, counts, gearI + 1)
     gears[gearI] = '.';
@@ -61,10 +65,14 @@ function isValidSegment(gears, counts) {
       }
 
       currentGearLength = 0;
+    } else if (char === '#' && currentGearLength > counts[countI]) {
+      return false;
     } else {
       currentGearLength++;
     }
   }
+
+  if (countI > counts.length - 1) return false;
 
   return true;
 }
@@ -88,8 +96,12 @@ function isValidConfiguration(gears, counts) {
     }
   }
 
-  if (countI === counts.length && currentGearLength === 0) return true;
-  if (countI === counts.length - 1 && currentGearLength === counts[countI]) return true;
+  if (countI === counts.length && currentGearLength === 0) {
+    return true;
+  }
+  if (countI === counts.length - 1 && currentGearLength === counts[countI]) {
+    return true;
+  }
 
   return false;
 }
