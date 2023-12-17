@@ -5,9 +5,6 @@ function solution() {
 
   let sum = 0;
   for (let row of input) {
-    console.log('---------------');
-    console.log(row);
-
     let [gears, counts] = row.split(' ');
     gears = gears.split('');
     counts = counts.split(',').map(count => parseInt(count));
@@ -20,90 +17,54 @@ function solution() {
       expandedCounts = [...expandedCounts, ...counts];
     }
     let configurations = getPossibleConfigurations(expandedGears, expandedCounts);
-    console.log(configurations);
     sum += configurations;
   }
 
   return sum;
 }
 
-function getPossibleConfigurations(gears, counts, gearI = 0) {
-  if (gearI === gears.length) {
-    return isValidConfiguration(gears, counts) ? 1 : 0;
-  }
+function getPossibleConfigurations(gears, counts, memo = new Map) {
+  let key = [gears, counts].join();
+  if (memo.has(key)) return memo.get(key);
 
-  let char = gears[gearI];
-
-  if (char !== '?' && !isValidSegment(gears.slice(0, gearI + 1), counts)) {
+  if (gears.length === 0 && counts.length === 0) {
+    return 1;
+  } else if (gears.length === 0 && counts.length > 0) {
     return 0;
+  } else if (gears.length > 0 && counts.length === 0) {
+    return gears.every(gear => gear === '?' || gear === '.') ? 1 : 0;
   }
 
-  if (char === '?') {
-    gears[gearI] = '#';
-    let left = getPossibleConfigurations(gears, counts, gearI + 1)
-    gears[gearI] = '.';
-    let right = getPossibleConfigurations(gears, counts, gearI + 1)
-    gears[gearI] = '?';
-
-    return left + right;
-  } else {
-    return getPossibleConfigurations(gears, counts, gearI + 1);
+  let left = 0;
+  let right = 0;
+  if (gears[0] === '.' || gears[0] === '?') {
+    left = getPossibleConfigurations(gears.slice(1), counts, memo);
   }
-}
 
-function isValidSegment(gears, counts) {
-  let countI = 0;
+  if (gears[0] === '#' || gears[0] === '?') {
+    let currentCount = counts[0];
 
-  let currentGearLength = 0;
-  for (let i = 0; i < gears.length; i++) {
-    let char = gears[i];
-    if (char === '.') {
-      if (currentGearLength > 0 && currentGearLength !== counts[countI]) {
-        return false;
-      } else if (currentGearLength > 0 && currentGearLength === counts[countI]) {
-        countI++;
+    let stop = false;
+    for (let i = 0; i < currentCount; i++) {
+      if (gears[i] === '.') {
+        stop = true;
+        break;
       }
+    }
 
-      currentGearLength = 0;
-    } else if (char === '#' && currentGearLength > counts[countI]) {
-      return false;
+    if (stop || currentCount > gears.length || gears[currentCount] === '#') {
+      right = 0;
+    } else if (gears[currentCount] === '.') {
+      right = getPossibleConfigurations(gears.slice(currentCount), counts.slice(1), memo);
     } else {
-      currentGearLength++;
+      right = getPossibleConfigurations(gears.slice(currentCount + 1), counts.slice(1), memo);
     }
   }
 
-  if (countI > counts.length - 1) return false;
+  let result = left + right;
+  memo.set(key, result);
 
-  return true;
-}
-
-function isValidConfiguration(gears, counts) {
-  let countI = 0;
-
-  let currentGearLength = 0;
-  for (let i = 0; i < gears.length; i++) {
-    let char = gears[i];
-    if (char === '.') {
-      if (currentGearLength > 0 && currentGearLength !== counts[countI]) {
-        return false;
-      } else if (currentGearLength > 0 && currentGearLength === counts[countI]) {
-        countI++;
-      }
-
-      currentGearLength = 0;
-    } else {
-      currentGearLength++;
-    }
-  }
-
-  if (countI === counts.length && currentGearLength === 0) {
-    return true;
-  }
-  if (countI === counts.length - 1 && currentGearLength === counts[countI]) {
-    return true;
-  }
-
-  return false;
+  return result;
 }
 
 console.log(solution());
