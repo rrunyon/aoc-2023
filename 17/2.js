@@ -44,7 +44,8 @@ function aStar(grid, start, end) {
     direction: RIGHT,
     directionCount: 0,
     g: 0,
-    h: 0,
+    h: (Math.abs(start[0] - end[0]) + Math.abs(start[1] - end[1])),
+    // h: 0,
   });
 
   let startNode2 = new Node({
@@ -52,7 +53,8 @@ function aStar(grid, start, end) {
     direction: DOWN,
     directionCount: 0,
     g: 0,
-    h: 0,
+    h: (Math.abs(start[0] - end[0]) + Math.abs(start[1] - end[1])),
+    // h: 0,
   });
 
   open.enqueue(startNode1);
@@ -83,6 +85,7 @@ function aStar(grid, start, end) {
           directionCount: current.directionCount + 1,
           g: current.g + grid[newI][newJ],
           h: 0,
+          h: (Math.abs(newI - end[0]) + (Math.abs(newJ - end[1]))),
         });
 
         open.enqueue(neighbor);
@@ -102,7 +105,8 @@ function aStar(grid, start, end) {
             direction: key,
             directionCount: key === current.direction ? current.directionCount + 1 : 1,
             g: current.g + grid[newI][newJ],
-            h: 0,
+            // h: 0,
+            h: (Math.abs(newI - end[0]) + (Math.abs(newJ - end[1]))),
           });
 
           open.enqueue(neighbor);
