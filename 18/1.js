@@ -11,15 +11,22 @@ const DIRS = {
 function solution() {
   let input = fs.readFileSync('./18/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
-  let grid = new Array(10000);
+  let grid = new Array(1000);
   for (let i = 0; i < grid.length; i++) {
-    grid[i] = new Array(10000).fill('.');
+    grid[i] = new Array(400).fill('.');
   }
 
   let instructions = input.map(parseInstruction);
   dig(grid, instructions);
   floodFillTrench(grid);
+  printGrid(grid);
   return countTrenchArea(grid);
+}
+
+function printGrid(grid) {
+  for (let row of grid) {
+    console.log(row.join(''));
+  }
 }
 
 function parseInstruction(row) {
