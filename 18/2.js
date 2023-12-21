@@ -1,4 +1,3 @@
-import { Queue } from '@datastructures-js/queue';
 import * as fs from 'fs';
 
 const DIRS = {
@@ -12,9 +11,9 @@ function solution() {
   let input = fs.readFileSync('./18/test-input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
   let instructions = input.map(parseInstruction2);
-  let points = getPoints(instructions);
-  let interiorPointsCount = shoelace(points);
-  return getArea(interiorPointsCount, points);
+  let { points, count: exteriorCount } = getPoints(instructions);
+  let interiorCount = shoelace(points);
+  return getArea(interiorCount, exteriorCount);
 }
 
 function getPoints(instructions) {
@@ -22,16 +21,19 @@ function getPoints(instructions) {
   let startJ = 0;
   let currentPosition = [startI, startJ];
 
+  // let points = [[0, 0]];
   let points = [];
+  let count = 0;
   for (let [direction, distance] of instructions) {
     let [i, j] = currentPosition;
     let newI = i + (direction[0] * distance);
     let newJ = j + (direction[1] * distance);
 
     points.push([newI, newJ]);
+    count += distance;
   }
 
-  return points;
+  return { points, count };
 }
 
 function shoelace(points) {
@@ -40,14 +42,14 @@ function shoelace(points) {
   for (let i = 0; i < points.length; i++) {
     let p = i ? points[i - 1] : points[points.length - 1];
     let q = points[i];
-    sum += (p[0] - q[0]) * (p[1] + q[1]);
+    sum += (p[0] * q[1]) - (p[1] * q[0]);
   }
 
-  return Math.abs(sum) / 2;
+  return Math.abs(sum / 2);
 }
 
-function getArea(interiorPointsCount, points) {
-  return interiorPointsCount + (points.length / 2) + 1;
+function getArea(interiorCount, exteriorCount) {
+  return interiorCount + exteriorCount / 2 + 1;
 }
 
 function parseInstruction(row) {
