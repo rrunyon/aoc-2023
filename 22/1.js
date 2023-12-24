@@ -1,17 +1,29 @@
 import * as fs from 'fs';
+import { PriorityQueue  } from '@datastructures-js/priority-queue';
 
 function solution() {
-  let input = fs.readFileSync('./22/test-input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./22/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
   let bricks = input.map((row, i) => new Brick(row, i));
   let positionMap = updateBrickPositions(bricks);
+  let queue = new PriorityQueue((a, b) => {
+    let aMinZ = Math.min(a.start[2], a.end[2]);
+    let bMinZ = Math.min(b.start[2], b.end[2]);
+    return aMinZ - bMinZ;
+  });
 
-  // From the bottom up, compute bricks falling until stabilized
-  for (let i = 2; i < 100; i++) {
-    for (let brick of bricks) {
-      let allPositions = new Set(Array.from(positionMap.values()).flat());
+  for (let brick of bricks) queue.enqueue(brick);
 
-      let { start, end } = brick;
+  while (queue.size()) {
+    let brick = queue.dequeue();
+
+    let allPositions = new Set(Array.from(positionMap.values()).flat());
+
+    let { start, end } = brick;
+
+    while (true) {
+      let lowestZ = Math.min(start[2], end[2]);
+      if (lowestZ === 1) break;
 
       if (brick.orientation === Z) {
         let bottom = (start[2] < end[2]) ? start : end;
@@ -27,28 +39,129 @@ function solution() {
           positionMap.set(brick.index, nextPositions);
           brick.start[2]--;
           brick.end[2]--;
+        } else {
+          break;
         }
       } else {
-        if (Math.min(start[2], end[2]) === i) {
-          let positions = positionMap.get(brick.index);
-          let nextPositions = positions.map(position => {
-            let nextPosition = [...position.split(',')];
-            nextPosition[2]--;
-            return nextPosition.join();
-          });
+        let positions = positionMap.get(brick.index);
+        let nextPositions = positions.map(position => {
+          // console.log(position);
+          let nextPosition = [...position.split(',')];
+          nextPosition[2]--;
+          return nextPosition.join();
+        });
 
-          // If none of our next positions are currently occupied, commit the negative z transform
-          if (!nextPositions.some(pos => allPositions.has(pos))) {
-            positionMap.set(brick.index, nextPositions);
-            brick.start[2]--;
-            brick.end[2]--;
-          }
+        // If none of our next positions are currently occupied, commit the negative z transform
+        if (!nextPositions.some(pos => allPositions.has(pos))) {
+          positionMap.set(brick.index, nextPositions);
+          brick.start[2]--;
+          brick.end[2]--;
+        } else {
+          break;
         }
+      }
+    }
+
+    // printPositions(positionMap);
+    console.log(`brick ${brick.index} settled at ${brick.start}, ${brick.end}`);
+  }
+
+  // checkIntegrity(positionMap);
+
+  let safeCount = 0;
+  for (let brick of bricks) {
+    console.log('simulating removing brick: ', brick.index);
+    let result = simulateFallingWithout(brick, bricks, positionMap);
+    if (result) {
+      console.log(`brick ${brick.index} is safe to remove`);
+      safeCount++;
+    }
+    console.log(safeCount);
+  }
+
+  return safeCount;
+}
+
+function printPositions(map) {
+  // return;
+  let xGrid = new Array(10);
+  let yGrid = new Array(10);
+  for (let i = 0; i < xGrid.length; i++) {
+    xGrid[i] = new Array(10).fill(' ');
+    yGrid[i] = new Array(10).fill(' ');
+  }
+
+  for (let [key, positions] of map) {
+    for (let position of positions) {
+      let [x, y, z] = position.split(',');
+      xGrid[z][x] = key;
+      yGrid[z][y] = key;
+    }
+  }
+
+  for (let row of xGrid.reverse()) {
+    console.log(row.join(''));
+  }
+
+  for (let row of yGrid.reverse()) {
+    console.log(row.join(''));
+  }
+}
+
+function checkIntegrity(positionMap) {
+  for (let [key, positions] of positionMap) {
+    let cached = positionMap.get(key);
+    positionMap.delete(key);
+    let allPositions = new Set(Array.from(positionMap.values()).flat());
+
+    for (let position of positions) {
+      if (allPositions.has(position)) console.log(`${position} exists twice in map`);
+    }
+
+    positionMap.set(key, cached);
+  }
+}
+
+function simulateFallingWithout(removedBrick, bricks, positionMap) {
+  let savedPositions = positionMap.get(removedBrick.index)
+  positionMap.delete(removedBrick.index);
+
+  for (let brick of bricks) {
+    if (brick.index === removedBrick.index) continue;
+
+    let { start, end } = brick;
+    let lowestZ = Math.min(start[2], end[2]);
+    if (lowestZ === 1) continue;
+
+    let allPositions = new Set(Array.from(positionMap.values()).flat());
+
+    if (brick.orientation === Z) {
+      let bottom = (start[2] < end[2]) ? start : end;
+      let next = [...bottom];
+      next[2]--;
+      if (!allPositions.has(next.join())) {
+        positionMap.set(removedBrick.index, savedPositions);
+        return false;
+      }
+    } else {
+      let positions = positionMap.get(brick.index);
+      let nextPositions = positions.map(position => {
+        let nextPosition = [...position.split(',')];
+        nextPosition[2]--;
+        return nextPosition.join();
+      });
+
+      // If none of our next positions are currently occupied, commit the negative z transform
+      if (!nextPositions.some(pos => allPositions.has(pos))) {
+        positionMap.set(removedBrick.index, savedPositions);
+        return false;
       }
     }
   }
 
-  return 0;
+  positionMap.set(removedBrick.index, savedPositions);
+  
+  return true;
 }
 
 function updateBrickPositions(bricks) {
@@ -84,7 +197,7 @@ function updateBrickPositions(bricks) {
         }
         break;
       case null:
-        positions.push(start);
+        positions.push(start.join());
         break;
     }
 
