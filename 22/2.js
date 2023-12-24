@@ -1,11 +1,9 @@
 import * as fs from 'fs';
 import { PriorityQueue  } from '@datastructures-js/priority-queue';
+import { Queue } from '@datastructures-js/queue';
 
-/*
-
-*/
 function solution() {
-  let input = fs.readFileSync('./22/test-input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
+  let input = fs.readFileSync('./22/input.txt', { encoding: 'utf8', flag: 'r' }).split('\n');
 
   let bricks = input.map((row, i) => new Brick(row, i));
   let positionMap = updateBrickPositions(bricks);
@@ -66,25 +64,53 @@ function solution() {
       }
     }
 
-
     console.log(`brick ${brick.index} settled at ${brick.start}, ${brick.end}`);
   }
 
   let { dependsOnMap, dependedOnMap } = buildDependsOnMap(positionMap, bricks);
 
-  return countSafeBricks(dependsOnMap);
+  /*
+  Counting total falling bricks after a disintegration via BFS. Add the disintegrated brick to a queue and visited set.
+  While the queue has any values, dequeue bricks and look at the bricks they depend on. If all the bricks they depend
+  on are in the visited, set, add the current brick to the visited set and enqueue its neighbors. Count the brick.
+  Return the total count.
+  */
+
+  return countTotalFallingBricks(dependsOnMap, dependedOnMap, bricks);
 }
 
-function countSafeBricks(dependsOnMap) {
-  let set = new Set;
+function countTotalFallingBricks(dependsOnMap, dependedOnMap, bricks) {
+  let total = 0;
 
-  for (let [_key, values] of dependsOnMap) {
-    if (values.size === 1) {
-      set.add(Array.from(values)[0]);
+  for (let brick of bricks) {
+    let count = -1;
+    let queue = new Queue;
+    let disintegrated = new Set;
+
+    queue.enqueue(brick.index);
+    disintegrated.add(brick.index);
+
+    while (queue.size()) {
+      let brickIndex = queue.dequeue();
+      count++;
+
+      let dependedOn = Array.from(dependedOnMap.get(brickIndex) ?? []);
+
+      for (let next of dependedOn) {
+        if (disintegrated.has(next)) continue;
+
+        let dependsOn = Array.from(dependsOnMap.get(next));
+        if (dependsOn.every(index => disintegrated.has(index))) {
+          disintegrated.add(next);
+          queue.enqueue(next);
+        }
+      }
     }
+
+    total += count;
   }
 
-  return dependsOnMap.size - set.size;
+  return total;
 }
 
 function buildDependsOnMap(positionMap, bricks) {
@@ -108,7 +134,6 @@ function buildDependsOnMap(positionMap, bricks) {
     let positions = positionMap.get(brick.index);
     let key = brick.index;
     dependsOnMap.set(key,  new Set);
-    // let brick = brickMap.get(key);
 
     if (brick.orientation === Z) {
       let { start, end } = brick;
